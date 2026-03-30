@@ -114,7 +114,7 @@ object ExternalSigner {
         intents.put(id, event.pubKey)
         externalSignerLauncher?.openSignerApp(
             event.content,
-            SignerType.NIP04_DECRYPT,
+            if (isNIP04(event.content)) SignerType.NIP04_DECRYPT else SignerType.NIP44_DECRYPT,
             event.pubKey,
             id,
             onReady,
@@ -127,7 +127,7 @@ object ExternalSigner {
         intents.put(id, pubKey)
         externalSignerLauncher?.openSignerApp(
             content,
-            SignerType.NIP04_ENCRYPT,
+            SignerType.NIP44_ENCRYPT,
             pubKey,
             id,
             onReady,
@@ -148,5 +148,17 @@ object ExternalSigner {
             contentResolver = { Pokey.getInstance().contentResolverFn() },
         )
         externalSignerLaunchers.put(pubKey, externalSignerLauncher)
+    }
+
+    fun isNIP04(encoded: String): Boolean {
+        // cleaning up some bug from some client.
+        val cleanedUp = encoded.removeSuffix("-null")
+
+        val l = cleanedUp.length
+        if (l < 28) return false
+        return cleanedUp[l - 28] == '?' &&
+            cleanedUp[l - 27] == 'i' &&
+            cleanedUp[l - 26] == 'v' &&
+            cleanedUp[l - 25] == '='
     }
 }
